@@ -239,3 +239,270 @@ model SequenceCounter {
 
   @@id([tenantId, name])
 }
+
+// ---------- Clinical ----------
+
+model Patient {
+  id                    String    @id @default(uuid()) @db.Uuid
+  tenantId              String    @db.Uuid
+  userId                String?   @unique @db.Uuid
+  firstName             String
+  lastName              String
+  dateOfBirth           DateTime  @db.Date
+  gender                Gender    @default(UNDISCLOSED)
+  phone                 String?
+  email                 String?
+  address               String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  bloodType             String?
+  allergies             String[]  @default([])
+  medicalHistory        String?   @db.Text
+  currentMedications    String?   @db.Text
+  insuranceProvider     String?
+  insuranceNumber       String?
+  archivedAt            DateTime?
+  deletedAt             DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user          User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  appointments  Appointment[]
+  consultations Consultation[]
+  vitals        Vital[]
+  prescriptions Prescription[]
+  documents     MedicalDocument[]
+  invoices      Invoice[]
+  accessGrants  PatientAccess[]
+
+  @@index([tenantId, lastName, firstName])
+  @@index([tenantId, email])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, deletedAt, archivedAt])
+}
+
+// Explicit grant that lets a clinical user (doctor, nurse) see a patient record.
+model PatientAccess {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  patientId String   @db.Uuid
+  userId    String   @db.Uuid
+  grantedBy String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@unique([patientId, userId])
+  @@index([tenantId, userId])
+}
+
+model Doctor {
+  id             String       @id @default(uuid()) @db.Uuid
+  tenantId       String       @db.Uuid
+  userId         String       @unique @db.Uuid
+  specialization String
+  licenseNumber  String
+  phone          String?
+  consultationFee Decimal     @default(0) @db.Decimal(12, 2)
+  status         DoctorStatus @default(ACTIVE)
+  deletedAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  tenant        Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availability  DoctorAvailability[]
+  appointments  Appointment[]
+  consultations Consultation[]
+  prescriptions Prescription[]
+
+  @@unique([tenantId, licenseNumber])
+  @@index([tenantId, specialization])
+  @@index([tenantId, status])
+}
+
+model DoctorAvailability {
+  id        String @id @default(uuid()) @db.Uuid
+  doctorId  String @db.Uuid
+  dayOfWeek Int // 0 = Sunday ... 6 = Saturday
+  startTime String // "HH:mm"
+  endTime   String // "HH:mm"
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, dayOfWeek])
+}
+
+model StaffProfile {
+  id         String    @id @default(uuid()) @db.Uuid
+  tenantId   String    @db.Uuid
+  userId     String    @unique @db.Uuid
+  jobTitle   String?
+  department String?
+  phone      String?
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Appointment {
+  id          String            @id @default(uuid()) @db.Uuid
+  tenantId    String            @db.Uuid
+  patientId   String            @db.Uuid
+  doctorId    String            @db.Uuid
+  startsAt    DateTime
+  endsAt      DateTime
+  reason      String?
+  notes       String?           @db.Text
+  status      AppointmentStatus @default(PENDING)
+  createdById String            @db.Uuid
+  cancelledAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient      Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor       Doctor        @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  consultation Consultation?
+
+  @@index([tenantId, startsAt])
+  @@index([tenantId, doctorId, startsAt, endsAt])
+  @@index([tenantId, patientId, startsAt])
+  @@index([tenantId, status])
+}
+
+model Consultation {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @db.Uuid
+  appointmentId String    @unique @db.Uuid
+  patientId     String    @db.Uuid
+  doctorId      String    @db.Uuid
+  symptoms      String?   @db.Text
+  diagnosis     String?   @db.Text
+  observations  String?   @db.Text
+  treatment     String?   @db.Text
+  notes         String?   @db.Text
+  followUpAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointment   Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor        Doctor         @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  vitals        Vital[]
+  prescriptions Prescription[]
+
+  @@index([tenantId, patientId, createdAt])
+  @@index([tenantId, doctorId, createdAt])
+}
+
+model Vital {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @db.Uuid
+  patientId        String   @db.Uuid
+  consultationId   String?  @db.Uuid
+  recordedById     String   @db.Uuid
+  systolic         Int?
+  diastolic        Int?
+  heartRate        Int?
+  temperatureC     Decimal? @db.Decimal(4, 1)
+  weightKg         Decimal? @db.Decimal(5, 1)
+  heightCm         Decimal? @db.Decimal(5, 1)
+  oxygenSaturation Int?
+  recordedAt       DateTime @default(now())
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient      Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  consultation Consultation? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, patientId, recordedAt])
+}
+
+model Medication {
+  id           String           @id @default(uuid()) @db.Uuid
+  tenantId     String           @db.Uuid
+  name         String
+  genericName  String?
+  dosageForm   String?
+  strength     String?
+  manufacturer String?
+  status       MedicationStatus @default(ACTIVE)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  tenant Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items  PrescriptionItem[]
+
+  @@index([tenantId, name])
+  @@index([tenantId, genericName])
+  @@index([tenantId, status])
+}
+
+model Prescription {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @db.Uuid
+  number         String
+  patientId      String   @db.Uuid
+  doctorId       String   @db.Uuid
+  consultationId String?  @db.Uuid
+  notes          String?  @db.Text
+  issuedAt       DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient      Patient            @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor       Doctor             @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  consultation Consultation?      @relation(fields: [consultationId], references: [id], onDelete: SetNull)
+  items        PrescriptionItem[]
+
+  @@unique([tenantId, number])
+  @@index([tenantId, patientId, issuedAt])
+  @@index([tenantId, doctorId, issuedAt])
+}
+
+model PrescriptionItem {
+  id             String  @id @default(uuid()) @db.Uuid
+  prescriptionId String  @db.Uuid
+  medicationId   String? @db.Uuid
+  medicationName String
+  dosage         String
+  frequency      String
+  duration       String
+  route          String?
+  instructions   String? @db.Text
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medication   Medication?  @relation(fields: [medicationId], references: [id], onDelete: SetNull)
+
+  @@index([prescriptionId])
+}
+
+model MedicalDocument {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @db.Uuid
+  patientId       String         @db.Uuid
+  type            DocumentType   @default(OTHER)
+  fileName        String
+  storageKey      String         @unique
+  storageProvider String
+  mimeType        String
+  size            Int
+  accessPolicy    DocumentAccess @default(STAFF_ONLY)
+  uploadedById    String         @db.Uuid
+  deletedAt       DateTime?
+  createdAt       DateTime       @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, patientId, createdAt])
+  @@index([tenantId, type])
+}
