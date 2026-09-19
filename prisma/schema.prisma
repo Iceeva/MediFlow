@@ -506,3 +506,121 @@ model MedicalDocument {
   @@index([tenantId, patientId, createdAt])
   @@index([tenantId, type])
 }
+
+// ---------- Billing ----------
+
+model Invoice {
+  id          String        @id @default(uuid()) @db.Uuid
+  tenantId    String        @db.Uuid
+  number      String
+  patientId   String        @db.Uuid
+  status      InvoiceStatus @default(DRAFT)
+  subtotal    Decimal       @default(0) @db.Decimal(12, 2)
+  discount    Decimal       @default(0) @db.Decimal(12, 2)
+  tax         Decimal       @default(0) @db.Decimal(12, 2)
+  total       Decimal       @default(0) @db.Decimal(12, 2)
+  amountPaid  Decimal       @default(0) @db.Decimal(12, 2)
+  currency    String        @default("XOF")
+  dueDate     DateTime?
+  notes       String?       @db.Text
+  createdById String        @db.Uuid
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient  Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  items    InvoiceItem[]
+  payments Payment[]
+
+  @@unique([tenantId, number])
+  @@index([tenantId, patientId])
+  @@index([tenantId, status, dueDate])
+  @@index([tenantId, createdAt])
+}
+
+model InvoiceItem {
+  id          String  @id @default(uuid()) @db.Uuid
+  invoiceId   String  @db.Uuid
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(12, 2)
+  total       Decimal @db.Decimal(12, 2)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  tenantId          String        @db.Uuid
+  invoiceId         String        @db.Uuid
+  amount            Decimal       @db.Decimal(12, 2)
+  method            PaymentMethod
+  provider          String        @default("manual")
+  providerReference String?
+  idempotencyKey    String        @unique
+  status            PaymentStatus @default(PENDING)
+  createdById       String?       @db.Uuid
+  paidAt            DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, invoiceId])
+  @@index([tenantId, status, createdAt])
+  @@index([provider, providerReference])
+}
+
+// Processed provider webhook events, for idempotent webhook handling.
+model WebhookEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  provider  String
+  eventId   String
+  createdAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+}
+
+// ---------- Notifications and audit ----------
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  tenantId  String           @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, read, createdAt])
+}
+
+// Append-only. The API exposes no update or delete path for this table.
+model AuditLog {
+  id         String      @id @default(uuid()) @db.Uuid
+  tenantId   String?     @db.Uuid
+  userId     String?     @db.Uuid
+  action     String
+  resource   String
+  resourceId String?
+  result     AuditResult @default(SUCCESS)
+  ip         String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, userId, createdAt])
+  @@index([tenantId, resource, resourceId])
+}
