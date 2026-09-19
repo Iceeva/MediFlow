@@ -1,0 +1,241 @@
+// MediFlow data model. All business tables carry tenantId (a tenant is a healthcare facility).
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------- Enums ----------
+
+enum Role {
+  SUPER_ADMIN
+  CLINIC_ADMIN
+  DOCTOR
+  NURSE
+  RECEPTIONIST
+  ACCOUNTANT
+  PATIENT
+}
+
+enum Gender {
+  FEMALE
+  MALE
+  OTHER
+  UNDISCLOSED
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum DoctorStatus {
+  ACTIVE
+  ON_LEAVE
+  INACTIVE
+}
+
+enum MedicationStatus {
+  ACTIVE
+  DISCONTINUED
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum DocumentType {
+  PDF
+  IMAGE
+  SCAN
+  LAB_RESULT
+  MEDICAL_REPORT
+  PRESCRIPTION
+  INVOICE
+  OTHER
+}
+
+enum DocumentAccess {
+  STAFF_ONLY
+  PATIENT_VISIBLE
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+  OVERDUE
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  MOBILE_MONEY
+  INSURANCE
+}
+
+enum NotificationType {
+  APPOINTMENT_CREATED
+  APPOINTMENT_UPDATED
+  APPOINTMENT_REMINDER
+  PRESCRIPTION_ISSUED
+  DOCUMENT_ADDED
+  INVOICE_ISSUED
+  PAYMENT_RECEIVED
+  SYSTEM
+}
+
+enum TokenPurpose {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+enum AuditResult {
+  SUCCESS
+  DENIED
+  FAILURE
+}
+
+// ---------- Identity and tenancy ----------
+
+model Tenant {
+  id        String       @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String       @unique
+  email     String?
+  phone     String?
+  address   String?
+  status    TenantStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  deletedAt DateTime?
+
+  memberships   Membership[]
+  patients      Patient[]
+  doctors       Doctor[]
+  staff         StaffProfile[]
+  appointments  Appointment[]
+  consultations Consultation[]
+  vitals        Vital[]
+  medications   Medication[]
+  prescriptions Prescription[]
+  documents     MedicalDocument[]
+  invoices      Invoice[]
+  payments      Payment[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+  accessGrants  PatientAccess[]
+  counters      SequenceCounter[]
+}
+
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  phone           String?
+  isSuperAdmin    Boolean   @default(false)
+  emailVerifiedAt DateTime?
+  disabledAt      DateTime?
+  lastLoginAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  memberships   Membership[]
+  sessions      Session[]
+  tokens        VerificationToken[]
+  doctor        Doctor?
+  staffProfile  StaffProfile?
+  patient       Patient?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+}
+
+// Role of a user inside one tenant. A user can belong to several tenants.
+model Membership {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  tenantId  String   @db.Uuid
+  role      Role
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@index([tenantId, role])
+}
+
+model Session {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  tenantId   String?   @db.Uuid
+  tokenHash  String    @unique
+  ip         String?
+  userAgent  String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+model VerificationToken {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @db.Uuid
+  purpose   TokenPurpose
+  tokenHash String       @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+}
+
+// Fixed-window rate limiting stored in PostgreSQL (no Redis).
+model RateLimit {
+  key       String   @id
+  count     Int
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+}
+
+// Per-tenant human-readable sequences (invoice numbers, prescription numbers).
+model SequenceCounter {
+  tenantId String @db.Uuid
+  name     String
+  value    Int    @default(0)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, name])
+}
