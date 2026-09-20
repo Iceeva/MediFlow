@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { forbidden, notFound } from "@/lib/errors";
 import { requireTenantId } from "@/lib/tenant";
 import { pageArgs, type Pagination } from "@/lib/http";
-import { startOfUtcDay } from "@/lib/time";
 import type { AuthContext } from "@/lib/session";
 import { can } from "@/lib/permissions";
 
@@ -37,7 +36,6 @@ export async function getDoctor(auth: AuthContext, id: string) {
     prisma.appointment.findMany({ where: { tenantId, doctorId: id }, distinct: ["patientId"], select: { patientId: true } }).then((r) => r.length),
     prisma.consultation.count({ where: { tenantId, doctorId: id } }),
   ]);
-  void startOfUtcDay;
   return { ...doctor, stats: { upcomingAppointments: upcoming, patients, consultations: completed } };
 }
 
