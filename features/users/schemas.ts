@@ -39,6 +39,7 @@ export const createTenantSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().max(30).optional(),
   address: z.string().max(200).optional(),
+  timezone: z.string().max(60).default("UTC"),
   admin: z.object({
     email: z.string().trim().toLowerCase().email(),
     firstName: z.string().trim().min(1).max(80),
@@ -51,6 +52,7 @@ export const updateTenantSchema = z.object({
   email: z.string().email().nullable().optional(),
   phone: z.string().max(30).nullable().optional(),
   address: z.string().max(200).nullable().optional(),
+  timezone: z.string().max(60).optional(),
   status: z.enum(["ACTIVE", "SUSPENDED"]).optional(), // status: SUPER_ADMIN only
 });
 

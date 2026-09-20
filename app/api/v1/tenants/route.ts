@@ -18,7 +18,7 @@ export const GET = route({}, async ({ auth }) => {
 export const POST = route({ permission: "tenant:manage" }, async ({ req, audit }) => {
   const input = await parseBody(req, createTenantSchema);
   if (await prisma.tenant.findUnique({ where: { slug: input.slug }, select: { id: true } })) throw conflict("This clinic address is already taken");
-  const tenant = await prisma.tenant.create({ data: { name: input.name, slug: input.slug, email: input.email, phone: input.phone, address: input.address } });
+  const tenant = await prisma.tenant.create({ data: { name: input.name, slug: input.slug, email: input.email, phone: input.phone, address: input.address, timezone: input.timezone } });
   const admin = await createStaffUser(tenant.id, { ...input.admin, role: "CLINIC_ADMIN" });
   await audit("tenant.create", "tenant", tenant.id, { adminId: admin.id });
   return created({ id: tenant.id, slug: tenant.slug, adminId: admin.id });

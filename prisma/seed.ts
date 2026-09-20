@@ -22,7 +22,7 @@ async function main() {
   const tenant = await prisma.tenant.upsert({
     where: { slug: "demo-clinic" },
     update: {},
-    create: { name: "Demo Clinic", slug: "demo-clinic", email: "contact@demo-clinic.test", phone: "+22900000000", address: "1 Fictional Avenue" },
+    create: { name: "Demo Clinic", slug: "demo-clinic", email: "contact@demo-clinic.test", phone: "+22900000000", address: "1 Fictional Avenue", timezone: "Africa/Porto-Novo" },
   });
 
   const roles: [string, string, string, Role][] = [

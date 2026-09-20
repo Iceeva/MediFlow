@@ -125,6 +125,7 @@ model Tenant {
   email     String?
   phone     String?
   address   String?
+  timezone  String       @default("UTC") // IANA name, used for doctor availability and reminders
   status    TenantStatus @default(ACTIVE)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
