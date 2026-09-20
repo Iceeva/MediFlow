@@ -6,6 +6,7 @@ import { pageArgs, type Pagination } from "@/lib/http";
 import type { AuthContext } from "@/lib/session";
 import { clinicalWhere } from "./scope";
 import { patientWhere } from "./scope";
+import type { CreateConsultationInput, CreateVitalInput } from "@/features/consultations/schemas";
 
 const select = {
   id: true, appointmentId: true, symptoms: true, diagnosis: true, observations: true, treatment: true, notes: true, followUpAt: true, createdAt: true, updatedAt: true,
@@ -30,7 +31,7 @@ export async function getConsultation(auth: AuthContext, id: string) {
 }
 
 /** Workflow: Patient -> Appointment -> Consultation. Only the appointment's doctor can open the consultation. */
-export async function createConsultation(auth: AuthContext, input: { appointmentId: string; followUpAt?: Date; vitals?: Prisma.VitalCreateWithoutTenantInput | Record<string, number | undefined> } & Record<string, unknown>) {
+export async function createConsultation(auth: AuthContext, input: CreateConsultationInput) {
   const tenantId = requireTenantId(auth);
   if (!auth.doctorId) throw forbidden("Only doctors can record consultations");
   const { appointmentId, vitals, ...fields } = input;
@@ -42,11 +43,11 @@ export async function createConsultation(auth: AuthContext, input: { appointment
 
   return prisma.$transaction(async (tx) => {
     const c = await tx.consultation.create({
-      data: { tenantId, appointmentId, patientId: appt.patientId, doctorId: appt.doctorId, ...(fields as object) },
+      data: { tenantId, appointmentId, patientId: appt.patientId, doctorId: appt.doctorId, ...fields },
       select: { id: true },
     });
     if (vitals && Object.values(vitals).some((v) => v !== undefined)) {
-      await tx.vital.create({ data: { ...(vitals as object), tenantId, patientId: appt.patientId, consultationId: c.id, recordedById: auth.userId } });
+      await tx.vital.create({ data: { ...vitals, tenantId, patientId: appt.patientId, consultationId: c.id, recordedById: auth.userId } });
     }
     await tx.appointment.update({ where: { id: appointmentId }, data: { status: "IN_PROGRESS" } });
     return tx.consultation.findUniqueOrThrow({ where: { id: c.id }, select });
@@ -68,9 +69,9 @@ export async function completeConsultation(auth: AuthContext, id: string) {
   return { id };
 }
 
-export async function recordVital(auth: AuthContext, input: { patientId: string; consultationId?: string } & Record<string, number | string | undefined>) {
+export async function recordVital(auth: AuthContext, input: CreateVitalInput) {
   const tenantId = requireTenantId(auth);
   const patient = await prisma.patient.findFirst({ where: { AND: [patientWhere(auth), { id: input.patientId }] }, select: { id: true } });
   if (!patient) throw notFound("Patient not found");
-  return prisma.vital.create({ data: { ...(input as object), tenantId, recordedById: auth.userId } as Prisma.VitalUncheckedCreateInput, select: { id: true, recordedAt: true } });
+  return prisma.vital.create({ data: { ...input, tenantId, recordedById: auth.userId }, select: { id: true, recordedAt: true } });
 }

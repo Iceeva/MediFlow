@@ -23,3 +23,6 @@ export const updateConsultationSchema = createConsultationSchema.omit({ appointm
 
 export const createVitalSchema = vitalsSchema.extend({ patientId: z.string().uuid(), consultationId: z.string().uuid().optional() })
   .refine((v) => Object.entries(v).some(([k, val]) => !["patientId", "consultationId"].includes(k) && val !== undefined), "Provide at least one measurement");
+
+export type CreateConsultationInput = z.infer<typeof createConsultationSchema>;
+export type CreateVitalInput = z.infer<typeof createVitalSchema>;
