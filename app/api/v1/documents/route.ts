@@ -19,7 +19,7 @@ export const POST = route({ permission: "document:write", rateLimit: { limit: 30
   if (!(file instanceof File)) throw badRequest("A file is required");
   if (file.size > MAX_UPLOAD_BYTES) throw badRequest("The file is too large");
   const fields = uploadFieldsSchema.parse({ patientId: form.get("patientId"), type: form.get("type") ?? undefined, accessPolicy: form.get("accessPolicy") ?? undefined });
-  const doc = await uploadDocument(auth, fields as never, { name: file.name, type: file.type, body: Buffer.from(await file.arrayBuffer()) });
+  const doc = await uploadDocument(auth, fields, { name: file.name, type: file.type, body: Buffer.from(await file.arrayBuffer()) });
   await audit("document.upload", "document", doc.id, { patientId: fields.patientId, size: doc.size });
   return created(doc);
 });

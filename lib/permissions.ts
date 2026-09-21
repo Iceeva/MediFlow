@@ -10,7 +10,7 @@ export const PERMISSIONS = [
   "prescription:read", "prescription:write",
   "medication:read", "medication:manage",
   "document:read", "document:write", "document:delete",
-  "invoice:read", "invoice:write", "payment:read", "payment:write",
+  "invoice:read", "invoice:write", "payment:read", "payment:write", "payment:initiate",
   "notification:read", "analytics:read", "audit:read", "search:use",
 ] as const;
 
@@ -27,7 +27,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "doctor:read", "doctor:manage",
     "appointment:read", "appointment:write",
     "medication:read", "medication:manage",
-    "invoice:read", "invoice:write", "payment:read", "payment:write",
+    "invoice:read", "invoice:write", "payment:read", "payment:write", "payment:initiate",
     "analytics:read", "audit:read", "search:use",
   ],
   DOCTOR: [
@@ -47,12 +47,12 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "appointment:read", "appointment:write", "search:use",
   ],
   ACCOUNTANT: [
-    ...COMMON, "invoice:read", "invoice:write", "payment:read", "payment:write", "analytics:read", "search:use",
+    ...COMMON, "invoice:read", "invoice:write", "payment:read", "payment:write", "payment:initiate", "analytics:read", "search:use",
   ],
   PATIENT: [
     ...COMMON, "patient:read", "patient:clinical", "doctor:read",
     "appointment:read", "appointment:book", "prescription:read",
-    "document:read", "invoice:read", "payment:read",
+    "document:read", "invoice:read", "payment:read", "payment:initiate",
   ],
 };
 

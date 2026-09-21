@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { DocumentType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { forbidden, notFound } from "@/lib/errors";
 import { requireTenantId } from "@/lib/tenant";
@@ -16,7 +16,7 @@ const select = {
 
 export async function listDocuments(auth: AuthContext, f: { patientId?: string; type?: string; q?: string; page: number; pageSize: number; order: "asc" | "desc" }) {
   const where: Prisma.MedicalDocumentWhereInput = {
-    AND: [documentWhere(auth), f.patientId ? { patientId: f.patientId } : {}, f.type ? { type: f.type as never } : {}, f.q ? { fileName: { contains: f.q, mode: "insensitive" } } : {}],
+    AND: [documentWhere(auth), f.patientId ? { patientId: f.patientId } : {}, f.type ? { type: f.type as DocumentType } : {}, f.q ? { fileName: { contains: f.q, mode: "insensitive" } } : {}],
   };
   const [items, total] = await Promise.all([
     prisma.medicalDocument.findMany({ where, select, orderBy: { createdAt: f.order }, skip: (f.page - 1) * f.pageSize, take: f.pageSize }),
@@ -31,7 +31,7 @@ export async function getDocument(auth: AuthContext, id: string) {
   return doc;
 }
 
-export async function uploadDocument(auth: AuthContext, fields: { patientId: string; type: never; accessPolicy: "STAFF_ONLY" | "PATIENT_VISIBLE" }, file: { name: string; type: string; body: Buffer }) {
+export async function uploadDocument(auth: AuthContext, fields: { patientId: string; type: DocumentType; accessPolicy: "STAFF_ONLY" | "PATIENT_VISIBLE" }, file: { name: string; type: string; body: Buffer }) {
   const tenantId = requireTenantId(auth);
   const patient = await prisma.patient.findFirst({ where: { AND: [patientWhere(auth), { id: fields.patientId }] }, select: { id: true, userId: true } });
   if (!patient) throw notFound("Patient not found");
