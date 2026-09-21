@@ -35,7 +35,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "appointment:read", "appointment:write",
     "consultation:read", "consultation:write", "vital:write",
     "prescription:read", "prescription:write", "medication:read",
-    "document:read", "document:write", "analytics:read", "search:use",
+    "document:read", "document:write", "document:delete", "analytics:read", "search:use",
   ],
   NURSE: [
     ...COMMON, "patient:read", "patient:clinical", "doctor:read",
