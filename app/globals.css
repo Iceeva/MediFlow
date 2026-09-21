@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: 211 45% 14%;
+  --paper: 200 22% 96%;
+  --surface: 0 0% 100%;
+  --line: 200 18% 86%;
+  --muted: 210 14% 38%;
+  --primary: 186 82% 27%;
+  --primary-foreground: 0 0% 100%;
+  --primary-soft: 186 40% 93%;
+  --danger: 8 70% 40%;
+  --danger-soft: 8 80% 96%;
+  --warn: 32 90% 28%;
+  --warn-soft: 40 90% 92%;
+  --ok: 152 60% 24%;
+  --ok-soft: 150 40% 92%;
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-paper font-sans text-ink antialiased; font-size: 15px; line-height: 1.55; }
+  h1 { @apply text-2xl font-bold tracking-tight; }
+  h2 { @apply text-lg font-bold; }
+  :focus-visible { outline: 3px solid hsl(var(--primary)); outline-offset: 2px; border-radius: 4px; }
+  ::selection { background: hsl(var(--primary-soft)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+dialog::backdrop { background: hsl(211 45% 14% / 0.45); }
+.fc { --fc-border-color: hsl(var(--line)); --fc-button-bg-color: hsl(var(--primary)); --fc-button-border-color: hsl(var(--primary)); --fc-button-hover-bg-color: hsl(186 82% 22%); --fc-button-active-bg-color: hsl(186 82% 20%); --fc-today-bg-color: hsl(var(--primary-soft)); font-size: 14px; }
