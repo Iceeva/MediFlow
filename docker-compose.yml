@@ -1,0 +1,41 @@
+# Local development: `docker compose up`
+# Services: frontend (Next.js with the integrated API) and postgres. There is NO Redis and no separate backend.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mediflow
+      POSTGRES_PASSWORD: mediflow
+      POSTGRES_DB: mediflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mediflow -d mediflow"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  frontend:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://mediflow:mediflow@postgres:5432/mediflow
+      DIRECT_URL: postgresql://mediflow:mediflow@postgres:5432/mediflow
+      AUTH_SECRET: dev-only-secret-change-me-dev-only-secret-change-me
+      STORAGE_PROVIDER: blob
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      SEED_DEMO_DATA: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  pgdata:
