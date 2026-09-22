@@ -262,7 +262,7 @@ Appliqué dans le code :
 - HTTPS forcé (HSTS), en-têtes de sécurité et CSP (`next.config.ts`), `X-Frame-Options: DENY`
 - RBAC par permissions + périmètres de lignes par rôle, **refus journalisés**
 - Isolation multi-tenant (section 9)
-- Validation **Zod** serveur sur toutes les entrées, tri en liste blanche, requêtes Prisma paramétrées (pas de concaténation SQL ; les 5 requêtes brutes utilisent des paramètres liés)
+- Validation **Zod** serveur sur toutes les entrées, tri en liste blanche, requêtes Prisma paramétrées (pas de concaténation SQL ; les rares requêtes brutes `$queryRaw` utilisent des paramètres liés via le tag template)
 - Protection XSS : React échappe par défaut, aucun `dangerouslySetInnerHTML`, CSP restrictive, emails échappés
 - Uploads : signature binaire vérifiée (le type déclaré et l'extension ne suffisent pas), taille limitée, nom nettoyé, objets chiffrés AES-256-GCM pour Vercel Blob, bucket S3/R2 privé
 - Téléchargement : lien signé HMAC lié au document **et** à l'utilisateur, 2 minutes, **plus** nouveau contrôle d'accès à l'usage, journalisé
