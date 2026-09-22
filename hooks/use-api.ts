@@ -39,4 +39,4 @@ export function useApiMutation<V, R = unknown>(opts: {
 }
 
 export const useMe = () =>
-  useQuery({ queryKey: ["/auth/me"], queryFn: () => api<{ user: { firstName: string; lastName: string; email: string }; userId: string; role: string; permissions: string[]; doctorId: string | null; patientId: string | null; tenant: { name: string; slug: string } | null }>("/auth/me"), staleTime: 60_000 });
+  useQuery({ queryKey: ["/auth/me"], queryFn: () => api<{ user: { firstName: string; lastName: string; email: string }; userId: string; role: string; permissions: string[]; doctorId: string | null; patientId: string | null; tenant: { id: string; name: string; slug: string } | null }>("/auth/me"), staleTime: 60_000 });
