@@ -8,5 +8,5 @@ export const GET = route({}, async ({ auth }) => {
     prisma.user.findUniqueOrThrow({ where: { id: auth.userId }, select: { id: true, email: true, firstName: true, lastName: true, phone: true, emailVerifiedAt: true } }),
     auth.tenantId ? prisma.tenant.findUnique({ where: { id: auth.tenantId }, select: { id: true, name: true, slug: true } }) : null,
   ]);
-  return ok({ user, tenant, role: auth.role, doctorId: auth.doctorId, patientId: auth.patientId, permissions: ROLE_PERMISSIONS[auth.role] });
+  return ok({ user, tenant, userId: auth.userId, role: auth.role, doctorId: auth.doctorId, patientId: auth.patientId, permissions: ROLE_PERMISSIONS[auth.role] });
 });
