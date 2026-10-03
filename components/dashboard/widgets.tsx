@@ -12,7 +12,10 @@ export function Stat({ label, value, hint }: { label: string; value: string | nu
   );
 }
 
-export function SeriesChart({ title, data, kind = "bar", format }: { title: string; data: { date: string; value: number }[]; kind?: "bar" | "line"; format?: (n: number) => string }) {
+const compactNumber = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)}k` : String(n));
+
+export function SeriesChart({ title, data, kind = "bar", compact = false }: { title: string; data: { date: string; value: number }[]; kind?: "bar" | "line"; compact?: boolean }) {
+  const format = compact ? compactNumber : undefined;
   const empty = data.every((d) => d.value === 0);
   const common = { data, margin: { top: 8, right: 8, left: -12, bottom: 0 } };
   const axes = (

@@ -42,7 +42,7 @@ export default async function DashboardPage() {
         </div>
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {d.kind === "admin" && <SeriesChart title="Appointments, last 14 days" data={d.series.appointments} />}
-          <SeriesChart title="Revenue, last 30 days" data={d.series.revenue} kind="line" format={(n) => (n >= 1000 ? `${Math.round(n / 1000)}k` : String(n))} />
+          <SeriesChart title="Revenue, last 30 days" data={d.series.revenue} kind="line" compact />
           {d.kind === "admin" && <SeriesChart title="Consultations, last 14 days" data={d.series.consultations} />}
           {d.kind === "admin" && <SeriesChart title="New patients per month" data={d.series.patients} />}
         </div>
