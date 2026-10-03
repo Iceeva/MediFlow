@@ -16,7 +16,7 @@ import { usePermissions } from "@/hooks/use-permissions";
 import { api, ApiClientError } from "@/lib/client";
 import { age, formatDate, fullName } from "@/lib/utils";
 
-interface Patient extends Partial<PatientFormValues> { id: string; firstName: string; lastName: string; dateOfBirth: string; gender: string; allergies?: string[]; archivedAt: string | null; insuranceProvider?: string | null }
+interface Patient extends Partial<Omit<PatientFormValues, "firstName" | "lastName" | "dateOfBirth" | "gender" | "allergies" | "insuranceProvider">> { id: string; firstName: string; lastName: string; dateOfBirth: string; gender: string; allergies?: string[]; archivedAt: string | null; insuranceProvider?: string | null }
 
 const Row = ({ label, value }: { label: string; value?: React.ReactNode }) => (
   <div><dt className="text-sm text-muted">{label}</dt><dd className="font-bold">{value || "-"}</dd></div>
