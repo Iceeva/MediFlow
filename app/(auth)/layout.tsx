@@ -5,7 +5,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <p className="text-2xl font-bold">MediFlow</p>
         <div className="max-w-md space-y-4">
           <h1 className="text-4xl leading-tight">One calm place for every patient, visit and invoice.</h1>
-          <p className="text-white/70">Appointments, records, prescriptions and billing for your whole clinic, with each clinic's data kept strictly separate.</p>
+          <p className="text-white/70">Appointments, records, prescriptions and billing for your whole clinic, with each clinic&apos;s data kept strictly separate.</p>
         </div>
         <p className="text-sm text-white/50">Demonstration build. Compliance with medical data regulations depends on your hosting and procedures.</p>
       </section>

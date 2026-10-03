@@ -38,7 +38,7 @@ export function GlobalSearch() {
       {q.length >= 2 && (
         <div className="absolute z-30 mt-1 max-h-96 w-full overflow-y-auto rounded-card border border-line bg-surface p-2 shadow-lg">
           {isFetching && <p className="p-2 text-sm text-muted">Searching</p>}
-          {!isFetching && !any && <p className="p-2 text-sm text-muted">No results for "{q}"</p>}
+          {!isFetching && !any && <p className="p-2 text-sm text-muted">No results for &quot;{q}&quot;</p>}
           {groups.filter(([, items]) => items.length).map(([name, items]) => (
             <div key={name} className="mb-1">
               <p className="px-2 pt-1 text-xs font-bold text-muted">{name}</p>

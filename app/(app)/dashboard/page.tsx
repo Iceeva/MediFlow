@@ -90,7 +90,7 @@ export default async function DashboardPage() {
         <Card className="mb-4">
           <CardBody className="flex flex-wrap items-center justify-between gap-3">
             {n ? <div><p className="text-sm text-muted">Next appointment</p><p className="text-lg font-bold">{formatDateTime(n.startsAt)}</p><p>Dr {fullName(n.doctor.user)} - {n.doctor.specialization}</p></div>
-               : <div><p className="font-bold">No upcoming appointment</p><p className="text-muted">Book a visit with one of the clinic's doctors.</p></div>}
+               : <div><p className="font-bold">No upcoming appointment</p><p className="text-muted">Book a visit with one of the clinic&apos;s doctors.</p></div>}
             <Link href="/appointments" className="rounded-control bg-primary px-4 py-2 font-bold text-white">{n ? "View appointments" : "Book an appointment"}</Link>
           </CardBody>
         </Card>
